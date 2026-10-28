@@ -1,0 +1,7 @@
+{
+  "api_synced_sha": "6e4fb583a7c98a9a680783fc5b5bec9254685b66",
+  "api_synced_at": "2026-10-28T16:40:02.410153+00:00",
+  "api_synced_cmd": "gen-shared.sh",
+  "shared_sha": "6e4fb583a7c98a9a680783fc5b5bec9254685b66",
+  "consumer_repo": "lab-management-system-harmonyos"
+}

@@ -6,6 +6,7 @@
   "compatibleSdkVersion": "6.0.1(21)",
   "targetSdkVersion": "6.0.1(21)",
   "ohpm-registry": "https://ohpm.openharmony.cn/ohpm/",
+  "harmonyos-api-runtime": "file:（ADR-0054 过渡分发，路径见 entry/oh-package.json5；轮子仓构建产物，非 registry 版本）",
   "hypium": "1.0.30",
   "codelinter": "6.0.240",
   "node": "18.20.1（command-line-tools 自带 tool/node，DEVECO_NODE_HOME 由 hvigorw.bat 自动设）",
