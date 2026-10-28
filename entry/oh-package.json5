@@ -3,7 +3,7 @@
   "modelVersion": "6.0.1",
   "name": "entry",
   "version": "1.0.0",
-  "description": "output/lab-management-system-harmonyos entry 模块",
+  "description": "lab 实验室管理系统（HarmonyOS ArkTS 版） entry 模块",
   "main": "",
   "author": "",
   "license": "UNLICENSED",
