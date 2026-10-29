@@ -1,16 +1,15 @@
-// 入口 Ability：只挂 Index 页。下方 [shared 触碰] 是生成物编译图闭包点——ArkTS 编译图 =
-// import 闭包，未 import 的生成文件不进编译（spike 阴性对照实证）；Phase 1 页面接线后由真实消费替换。
+// 入口 Ability：只挂 Index 页（首页切片，lab 首业务消费）。下方 [shared 触碰] 仅保留
+// 尚未接页面的 Api 类——ArkTS 编译图 = import 闭包，未 import 的生成文件不进编译；
+// 各片接线后从触碰集移除（AuthApi/CatalogApi 已由 session/Session.ets + pages/Index.ets 消费）。
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { AuthApi, CalculationMethodsApi, CatalogApi, ContractsApi, FrontendBindMetaApi, InspectionDictionaryApi, ParamInterfacesApi, ReceiptsApi, ReportNamesApi, SamplesApi, SummaryApi, TechnicalRequirementsApi, TestRecordsApi } from '../shared';
+import { CalculationMethodsApi, ContractsApi, FrontendBindMetaApi, InspectionDictionaryApi, ParamInterfacesApi, ReceiptsApi, ReportNamesApi, SamplesApi, SummaryApi, TechnicalRequirementsApi, TestRecordsApi } from '../shared';
 import { ApiClient } from 'harmonyos-api-runtime';
 
-// [shared 触碰] 全部 13 个 Api 类实例化触碰：生成区全量编译覆盖（spike 同款）。
+// [shared 触碰] 未接线 Api 类实例化触碰：编译覆盖占位（spike 同款），逐片消费后移除。
 const __SHARED_TOUCH__: Array<Object> = [
-  new AuthApi(new ApiClient('https://touch.invalid')),
   new CalculationMethodsApi(new ApiClient('https://touch.invalid')),
-  new CatalogApi(new ApiClient('https://touch.invalid')),
   new ContractsApi(new ApiClient('https://touch.invalid')),
   new FrontendBindMetaApi(new ApiClient('https://touch.invalid')),
   new InspectionDictionaryApi(new ApiClient('https://touch.invalid')),

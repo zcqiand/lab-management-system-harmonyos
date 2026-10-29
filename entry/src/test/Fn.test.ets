@@ -3,6 +3,11 @@
 // ——挂假 ID 会在 L5 悬空（tree 里无此 ID）。业务测试进 Phase 1 再来，先补功能清单后写测试。
 import { describe, it, expect } from '@ohos/hypium';
 import { parseApiBaseUrl } from '../main/ets/config/AppConfig';
+// 会话状态机（工程设施测试，锚点留空——SessionState 是会话管道非业务功能；
+// 业务测试待功能树扩面后按 ID 挂）。只 import 生成模型（纯类型面），
+// 不触 runtime/@ohos——保持本地单测无设备依赖。
+import { LoginResponse } from '../main/ets/shared/models/LoginResponse';
+import { MemoryTokenStore, SessionState } from '../main/ets/session/SessionState';
 
 export function fnSuite(): void {
   describe('harness_fn_anchor', () => {
@@ -43,6 +48,72 @@ export function fnSuite(): void {
     it('parseApiBaseUrl returns trimmed url when configured', 0, () => {
       expect(parseApiBaseUrl('{"API_BASE_URL": " http://localhost:5104 "}'))
         .assertEqual('http://localhost:5104');
+    });
+  });
+}
+
+export function sessionSuite(): void {
+  describe('session_state', () => {
+    // fn:
+    it('initial state loads persisted token and is authenticated', 0, () => {
+      let store = new MemoryTokenStore();
+      store.save('tok-1');
+      let st = new SessionState(store);
+      expect(st.authenticated()).assertTrue();
+      expect(st.tokenProvider()).assertEqual('tok-1');
+    });
+    // fn:
+    it('applyLogin stores token via TokenStore', 0, () => {
+      let store = new MemoryTokenStore();
+      let st = new SessionState(store);
+      let resp: LoginResponse = {
+        token: 'tok-2',
+        user: { id: 'u1', username: 'alice' },
+        tenants: []
+      };
+      st.applyLogin(resp);
+      expect(st.authenticated()).assertTrue();
+      expect(store.load()).assertEqual('tok-2');
+    });
+    // fn:
+    it('applyLogin with empty token throws（禁空 token 入态）', 0, () => {
+      let st = new SessionState(new MemoryTokenStore());
+      let resp: LoginResponse = {
+        token: '',
+        user: { id: 'u1', username: 'alice' },
+        tenants: []
+      };
+      let threw = false;
+      try {
+        st.applyLogin(resp);
+      } catch {
+        threw = true;
+      }
+      expect(threw).assertTrue();
+    });
+    // fn:
+    it('logout clears token store and state', 0, () => {
+      let store = new MemoryTokenStore();
+      let st = new SessionState(store);
+      st.applyLogin({
+        token: 'tok-3',
+        user: { id: 'u1', username: 'alice' },
+        tenants: []
+      });
+      st.logout();
+      expect(st.authenticated()).assertFalse();
+      expect(store.load()).assertNull();
+    });
+    // fn:
+    it('tokenProvider without token throws', 0, () => {
+      let st = new SessionState(new MemoryTokenStore());
+      let threw = false;
+      try {
+        st.tokenProvider();
+      } catch {
+        threw = true;
+      }
+      expect(threw).assertTrue();
     });
   });
 }
