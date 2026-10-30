@@ -2,4 +2,4 @@
 
 import { TechnicalRequirement } from './TechnicalRequirement';
 
-export type TechnicalRequirementsListTechnicalRequirementsResponse = TechnicalRequirement;
+export type TechnicalRequirementsListTechnicalRequirementsResponse = Array<TechnicalRequirement>;

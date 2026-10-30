@@ -2,4 +2,4 @@
 
 import { MenuNode } from './MenuNode';
 
-export type AuthGetMenusResponse = MenuNode;
+export type AuthGetMenusResponse = Array<MenuNode>;

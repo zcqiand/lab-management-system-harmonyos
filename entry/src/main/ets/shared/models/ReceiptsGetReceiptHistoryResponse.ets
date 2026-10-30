@@ -2,4 +2,4 @@
 
 import { FlowHistoryEntry } from './FlowHistoryEntry';
 
-export type ReceiptsGetReceiptHistoryResponse = FlowHistoryEntry;
+export type ReceiptsGetReceiptHistoryResponse = Array<FlowHistoryEntry>;

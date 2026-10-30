@@ -2,4 +2,4 @@
 
 import { CalculationMethod } from './CalculationMethod';
 
-export type CalculationMethodsListCalculationMethodsResponse = CalculationMethod;
+export type CalculationMethodsListCalculationMethodsResponse = Array<CalculationMethod>;

@@ -2,4 +2,4 @@
 
 import { FlowActionResult } from './FlowActionResult';
 
-export type ReceiptsActFlowArchivedResponse = FlowActionResult;
+export type ReceiptsActFlowArchivedResponse = Array<FlowActionResult>;
