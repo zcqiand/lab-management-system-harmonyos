@@ -9,6 +9,11 @@ import { InspectionBrand } from '../shared/models/InspectionBrand';
 import { InspectionReportName } from '../shared/models/InspectionReportName';
 import { CalculationMethod } from '../shared/models/CalculationMethod';
 import { TechnicalRequirement } from '../shared/models/TechnicalRequirement';
+import { InspectionSpecialty } from '../shared/models/InspectionSpecialty';
+import { InspectionObject } from '../shared/models/InspectionObject';
+import { InspectionParameter } from '../shared/models/InspectionParameter';
+import { InspectionStandard } from '../shared/models/InspectionStandard';
+import { ParamInterface } from '../shared/models/ParamInterface';
 import { session } from '../session/Session';
 
 @Entry
@@ -23,6 +28,11 @@ struct Index {
   @State reportNames: InspectionReportName[] = [];
   @State calcMethods: CalculationMethod[] = [];
   @State techReqs: TechnicalRequirement[] = [];
+  @State specialties: InspectionSpecialty[] = [];
+  @State objects: InspectionObject[] = [];
+  @State parameters: InspectionParameter[] = [];
+  @State standards: InspectionStandard[] = [];
+  @State paramInterfaces: ParamInterface[] = [];
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -49,6 +59,15 @@ struct Index {
     this.techReqs = await session.listTechnicalRequirements();
   }
 
+  // 检测能力只读区（片3）：专业/对象/参数/标准 + 参数界面
+  private async loadCapability(): Promise<void> {
+    this.specialties = (await session.listSpecialties(1, 20)).items;
+    this.objects = (await session.listObjects(1, 20)).items;
+    this.parameters = (await session.listParameters(1, 20)).items;
+    this.standards = (await session.listStandards(1, 20)).items;
+    this.paramInterfaces = (await session.listParamInterfaces(1, 20)).items;
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -60,6 +79,7 @@ struct Index {
       await session.login(this.username, this.password);
       await this.loadBrands();
       await this.loadCodeTables();
+      await this.loadCapability();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -88,6 +108,11 @@ struct Index {
       this.reportNames = [];
       this.calcMethods = [];
       this.techReqs = [];
+      this.specialties = [];
+      this.objects = [];
+      this.parameters = [];
+      this.standards = [];
+      this.paramInterfaces = [];
       this.password = '';
       this.busy = false;
     }
@@ -195,6 +220,60 @@ struct Index {
         }
         .width('88%')
         .height(this.techReqs.length > 3 ? '10%' : undefined)
+        Text(`检测能力 · 专业（${this.specialties.length}）/ 对象（${this.objects.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.specialties, (item: InspectionSpecialty) => {
+            ListItem() {
+              Text(`专业 ${item.officialNo} · ${item.name}（${item.code}${item.enabled ? '' : ' · 停用'}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: InspectionSpecialty) => item.code)
+          ForEach(this.objects, (item: InspectionObject) => {
+            ListItem() {
+              Text(`对象 ${item.name}（${item.code} · ${item.inspectionSpecialtyCode}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: InspectionObject) => item.code)
+        }
+        .width('88%')
+        .height('12%')
+        Text(`检测能力 · 参数（${this.parameters.length}）/ 标准（${this.standards.length}）/ 界面（${this.paramInterfaces.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.parameters, (item: InspectionParameter) => {
+            ListItem() {
+              Text(`参数 ${item.name}（${item.code}${item.unit !== undefined ? ` · ${item.unit}` : ''}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: InspectionParameter) => item.code)
+          ForEach(this.standards, (item: InspectionStandard) => {
+            ListItem() {
+              Text(`标准 ${item.name}（${item.code}${item.version !== undefined ? ` ${item.version}` : ''} · ${item.status}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: InspectionStandard) => item.code)
+          ForEach(this.paramInterfaces, (item: ParamInterface) => {
+            ListItem() {
+              Text(`界面 ${item.componentPath}（${item.code}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: ParamInterface) => item.code)
+        }
+        .width('88%')
+        .height('14%')
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

@@ -4,12 +4,18 @@
 //     本仓无 clientId 面；SSO 回调链后置（家族档案：SSO 形态 Phase 1+）
 import { ApiClient } from 'harmonyos-api-runtime';
 import {
-  AuthApi, CatalogApi, ReportNamesApi, CalculationMethodsApi, TechnicalRequirementsApi
+  AuthApi, CatalogApi, ReportNamesApi, CalculationMethodsApi, TechnicalRequirementsApi,
+  InspectionDictionaryApi, ParamInterfacesApi
 } from '../shared';
 import { CatalogListBrandsResponse } from '../shared/models/CatalogListBrandsResponse';
 import { ReportNamesListReportNamesResponse } from '../shared/models/ReportNamesListReportNamesResponse';
 import { CalculationMethodsListCalculationMethodsResponse } from '../shared/models/CalculationMethodsListCalculationMethodsResponse';
 import { TechnicalRequirementsListTechnicalRequirementsResponse } from '../shared/models/TechnicalRequirementsListTechnicalRequirementsResponse';
+import { InspectionDictionaryListObjectsResponse } from '../shared/models/InspectionDictionaryListObjectsResponse';
+import { InspectionDictionaryListParametersResponse } from '../shared/models/InspectionDictionaryListParametersResponse';
+import { InspectionDictionaryListSpecialtiesResponse } from '../shared/models/InspectionDictionaryListSpecialtiesResponse';
+import { InspectionDictionaryListStandardsResponse } from '../shared/models/InspectionDictionaryListStandardsResponse';
+import { ParamInterfacesListParamInterfacesResponse } from '../shared/models/ParamInterfacesListParamInterfacesResponse';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -20,6 +26,8 @@ export class Session {
   private reportNamesApi: ReportNamesApi | null = null;
   private calculationMethodsApi: CalculationMethodsApi | null = null;
   private technicalRequirementsApi: TechnicalRequirementsApi | null = null;
+  private inspectionDictionaryApi: InspectionDictionaryApi | null = null;
+  private paramInterfacesApi: ParamInterfacesApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -34,6 +42,8 @@ export class Session {
     this.reportNamesApi = new ReportNamesApi(client);
     this.calculationMethodsApi = new CalculationMethodsApi(client);
     this.technicalRequirementsApi = new TechnicalRequirementsApi(client);
+    this.inspectionDictionaryApi = new InspectionDictionaryApi(client);
+    this.paramInterfacesApi = new ParamInterfacesApi(client);
   }
 
   private requireAuth(): AuthApi {
@@ -71,6 +81,20 @@ export class Session {
     return this.technicalRequirementsApi;
   }
 
+  private requireInspectionDictionary(): InspectionDictionaryApi {
+    if (this.inspectionDictionaryApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.inspectionDictionaryApi;
+  }
+
+  private requireParamInterfaces(): ParamInterfacesApi {
+    if (this.paramInterfacesApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.paramInterfacesApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -95,6 +119,27 @@ export class Session {
 
   listTechnicalRequirements(): Promise<TechnicalRequirementsListTechnicalRequirementsResponse> {
     return this.requireTechnicalRequirements().listTechnicalRequirements(undefined, undefined, undefined, undefined);
+  }
+
+  // 检测能力只读区（片3）：专业/对象/参数/标准字典四列表 + 参数界面列表，全量回显
+  listSpecialties(page: number, pageSize: number): Promise<InspectionDictionaryListSpecialtiesResponse> {
+    return this.requireInspectionDictionary().listSpecialties(page, pageSize, undefined);
+  }
+
+  listObjects(page: number, pageSize: number): Promise<InspectionDictionaryListObjectsResponse> {
+    return this.requireInspectionDictionary().listObjects(page, pageSize, undefined, undefined);
+  }
+
+  listParameters(page: number, pageSize: number): Promise<InspectionDictionaryListParametersResponse> {
+    return this.requireInspectionDictionary().listParameters(page, pageSize, undefined, undefined);
+  }
+
+  listStandards(page: number, pageSize: number): Promise<InspectionDictionaryListStandardsResponse> {
+    return this.requireInspectionDictionary().listStandards(page, pageSize, undefined, undefined);
+  }
+
+  listParamInterfaces(page: number, pageSize: number): Promise<ParamInterfacesListParamInterfacesResponse> {
+    return this.requireParamInterfaces().listParamInterfaces(page, pageSize, undefined);
   }
 
   async logout(): Promise<void> {
