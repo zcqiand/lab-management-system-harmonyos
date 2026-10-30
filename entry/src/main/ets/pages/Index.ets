@@ -18,6 +18,9 @@ import { Contract } from '../shared/models/Contract';
 import { SampleReceipt } from '../shared/models/SampleReceipt';
 import { Sample } from '../shared/models/Sample';
 import { TestRecord } from '../shared/models/TestRecord';
+import { DashboardStats } from '../shared/models/DashboardStats';
+import { SummaryData } from '../shared/models/SummaryData';
+import { SummaryColumn } from '../shared/models/SummaryColumn';
 import { session } from '../session/Session';
 
 @Entry
@@ -41,6 +44,10 @@ struct Index {
   @State receipts: SampleReceipt[] = [];
   @State samples: Sample[] = [];
   @State testRecords: TestRecord[] = [];
+  @State stats: DashboardStats | null = null;
+  @State reportSummary: SummaryData | null = null;
+  @State statLines: string[] = [];
+  @State summaryLines: string[] = [];
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -84,6 +91,43 @@ struct Index {
     this.testRecords = (await session.listTestRecords(1, 20)).items;
   }
 
+  // 汇总只读区（片5）：仪表盘计数 + 报表汇总（FrontendBindMeta @deprecated 不接）
+  // Map 字段（Map<string,string>）在装载时展平为行字符串——ArkTS ForEach 只吃 Array
+  private mapLines(m: Map<string, string>): string[] {
+    const lines: string[] = [];
+    m.forEach((v: string, k: string) => {
+      lines.push(`${k}=${v}`);
+    });
+    return lines;
+  }
+
+  private async loadSummary(): Promise<void> {
+    this.stats = await session.getDashboardStats();
+    this.reportSummary = await session.getReportSummary();
+    const s = this.stats;
+    if (s !== null) {
+      this.statLines = [
+        `合同 ${s.contractCount} · 委托 ${s.receiptCount} · 样品 ${s.sampleCount}`,
+        `待办任务 ${s.pendingTaskCount} · 今日检测 ${s.todayTestCount}`,
+      ].concat(this.mapLines(s.reportCountByStatus))
+        .concat(this.mapLines(s.qualifiedRateByMaterial))
+        .concat(this.mapLines(s.reportOutputByStatus))
+        .concat(this.mapLines(s.funnelByStage));
+    }
+    const rs = this.reportSummary;
+    if (rs !== null) {
+      const head = rs.columns.map((c: SummaryColumn) => c.label).join(' | ');
+      this.summaryLines = [`${rs.summaryName}（列：${head}）`];
+      rs.rows.forEach((row: Map<string, string>) => {
+        const cells = rs.columns.map((c: SummaryColumn) => {
+          const v = row.get(c.key);
+          return v !== undefined ? v : '—';
+        });
+        this.summaryLines.push(cells.join(' | '));
+      });
+    }
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -97,6 +141,7 @@ struct Index {
       await this.loadCodeTables();
       await this.loadCapability();
       await this.loadBusiness();
+      await this.loadSummary();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -134,6 +179,10 @@ struct Index {
       this.receipts = [];
       this.samples = [];
       this.testRecords = [];
+      this.stats = null;
+      this.reportSummary = null;
+      this.statLines = [];
+      this.summaryLines = [];
       this.password = '';
       this.busy = false;
     }
@@ -338,6 +387,36 @@ struct Index {
             }
             .padding(3)
           }, (item: TestRecord) => item.id)
+        }
+        .width('88%')
+        .height('12%')
+        Text('汇总 · 仪表盘')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.statLines, (line: string) => {
+            ListItem() {
+              Text(line)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (line: string) => line)
+        }
+        .width('88%')
+        .height('12%')
+        Text(`汇总 · 报表（${this.reportSummary !== null ? this.reportSummary.summaryName : '—'}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.summaryLines, (line: string) => {
+            ListItem() {
+              Text(line)
+                .fontSize(12)
+                .width('100%')
+            }
+            .padding(3)
+          }, (line: string, idx: number) => `${idx}-${line}`)
         }
         .width('88%')
         .height('12%')

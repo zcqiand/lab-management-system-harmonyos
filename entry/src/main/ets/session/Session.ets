@@ -6,7 +6,7 @@ import { ApiClient } from 'harmonyos-api-runtime';
 import {
   AuthApi, CatalogApi, ReportNamesApi, CalculationMethodsApi, TechnicalRequirementsApi,
   InspectionDictionaryApi, ParamInterfacesApi, ContractsApi, ReceiptsApi, SamplesApi,
-  TestRecordsApi
+  TestRecordsApi, SummaryApi
 } from '../shared';
 import { CatalogListBrandsResponse } from '../shared/models/CatalogListBrandsResponse';
 import { ReportNamesListReportNamesResponse } from '../shared/models/ReportNamesListReportNamesResponse';
@@ -21,6 +21,8 @@ import { ContractsListContractsResponse } from '../shared/models/ContractsListCo
 import { ReceiptsListReceiptsResponse } from '../shared/models/ReceiptsListReceiptsResponse';
 import { SamplesListSamplesResponse } from '../shared/models/SamplesListSamplesResponse';
 import { TestRecordsListTestRecordsResponse } from '../shared/models/TestRecordsListTestRecordsResponse';
+import { DashboardStats } from '../shared/models/DashboardStats';
+import { SummaryData } from '../shared/models/SummaryData';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -37,6 +39,7 @@ export class Session {
   private receiptsApi: ReceiptsApi | null = null;
   private samplesApi: SamplesApi | null = null;
   private testRecordsApi: TestRecordsApi | null = null;
+  private summaryApi: SummaryApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -57,6 +60,7 @@ export class Session {
     this.receiptsApi = new ReceiptsApi(client);
     this.samplesApi = new SamplesApi(client);
     this.testRecordsApi = new TestRecordsApi(client);
+    this.summaryApi = new SummaryApi(client);
   }
 
   private requireAuth(): AuthApi {
@@ -136,6 +140,13 @@ export class Session {
     return this.testRecordsApi;
   }
 
+  private requireSummary(): SummaryApi {
+    if (this.summaryApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.summaryApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -198,6 +209,18 @@ export class Session {
 
   listTestRecords(page: number, pageSize: number): Promise<TestRecordsListTestRecordsResponse> {
     return this.requireTestRecords().listTestRecords(page, pageSize, undefined, undefined);
+  }
+
+  // 汇总只读区（片5）：仪表盘计数 + 报表汇总（categoryCode 筛选后置）。
+  // FrontendBindMetaApi 不接（frontend-bind.tsp 全表面 @deprecated ADR-0014：runtime
+  // 实现已删、springboot 404 实证 2026-10-30、react/vue 消费者 0 import——生成物留
+  // 编译覆盖即可，见 EntryAbility 触碰集注释）
+  getDashboardStats(): Promise<DashboardStats> {
+    return this.requireSummary().getDashboardStats();
+  }
+
+  getReportSummary(): Promise<SummaryData> {
+    return this.requireSummary().getReportSummary(undefined, undefined, undefined);
   }
 
   async logout(): Promise<void> {
