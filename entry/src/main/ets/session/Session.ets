@@ -5,7 +5,8 @@
 import { ApiClient } from 'harmonyos-api-runtime';
 import {
   AuthApi, CatalogApi, ReportNamesApi, CalculationMethodsApi, TechnicalRequirementsApi,
-  InspectionDictionaryApi, ParamInterfacesApi
+  InspectionDictionaryApi, ParamInterfacesApi, ContractsApi, ReceiptsApi, SamplesApi,
+  TestRecordsApi
 } from '../shared';
 import { CatalogListBrandsResponse } from '../shared/models/CatalogListBrandsResponse';
 import { ReportNamesListReportNamesResponse } from '../shared/models/ReportNamesListReportNamesResponse';
@@ -16,6 +17,10 @@ import { InspectionDictionaryListParametersResponse } from '../shared/models/Ins
 import { InspectionDictionaryListSpecialtiesResponse } from '../shared/models/InspectionDictionaryListSpecialtiesResponse';
 import { InspectionDictionaryListStandardsResponse } from '../shared/models/InspectionDictionaryListStandardsResponse';
 import { ParamInterfacesListParamInterfacesResponse } from '../shared/models/ParamInterfacesListParamInterfacesResponse';
+import { ContractsListContractsResponse } from '../shared/models/ContractsListContractsResponse';
+import { ReceiptsListReceiptsResponse } from '../shared/models/ReceiptsListReceiptsResponse';
+import { SamplesListSamplesResponse } from '../shared/models/SamplesListSamplesResponse';
+import { TestRecordsListTestRecordsResponse } from '../shared/models/TestRecordsListTestRecordsResponse';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -28,6 +33,10 @@ export class Session {
   private technicalRequirementsApi: TechnicalRequirementsApi | null = null;
   private inspectionDictionaryApi: InspectionDictionaryApi | null = null;
   private paramInterfacesApi: ParamInterfacesApi | null = null;
+  private contractsApi: ContractsApi | null = null;
+  private receiptsApi: ReceiptsApi | null = null;
+  private samplesApi: SamplesApi | null = null;
+  private testRecordsApi: TestRecordsApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -44,6 +53,10 @@ export class Session {
     this.technicalRequirementsApi = new TechnicalRequirementsApi(client);
     this.inspectionDictionaryApi = new InspectionDictionaryApi(client);
     this.paramInterfacesApi = new ParamInterfacesApi(client);
+    this.contractsApi = new ContractsApi(client);
+    this.receiptsApi = new ReceiptsApi(client);
+    this.samplesApi = new SamplesApi(client);
+    this.testRecordsApi = new TestRecordsApi(client);
   }
 
   private requireAuth(): AuthApi {
@@ -95,6 +108,34 @@ export class Session {
     return this.paramInterfacesApi;
   }
 
+  private requireContracts(): ContractsApi {
+    if (this.contractsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.contractsApi;
+  }
+
+  private requireReceipts(): ReceiptsApi {
+    if (this.receiptsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.receiptsApi;
+  }
+
+  private requireSamples(): SamplesApi {
+    if (this.samplesApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.samplesApi;
+  }
+
+  private requireTestRecords(): TestRecordsApi {
+    if (this.testRecordsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.testRecordsApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -140,6 +181,23 @@ export class Session {
 
   listParamInterfaces(page: number, pageSize: number): Promise<ParamInterfacesListParamInterfacesResponse> {
     return this.requireParamInterfaces().listParamInterfaces(page, pageSize, undefined);
+  }
+
+  // 业务数据只读区（片4）：合同/委托/样品/记录四列表，回显分页全量
+  listContracts(page: number, pageSize: number): Promise<ContractsListContractsResponse> {
+    return this.requireContracts().listContracts(page, pageSize, undefined, undefined);
+  }
+
+  listReceipts(page: number, pageSize: number): Promise<ReceiptsListReceiptsResponse> {
+    return this.requireReceipts().listReceipts(page, pageSize, undefined, undefined, undefined, undefined);
+  }
+
+  listSamples(page: number, pageSize: number): Promise<SamplesListSamplesResponse> {
+    return this.requireSamples().listSamples(page, pageSize, undefined, undefined);
+  }
+
+  listTestRecords(page: number, pageSize: number): Promise<TestRecordsListTestRecordsResponse> {
+    return this.requireTestRecords().listTestRecords(page, pageSize, undefined, undefined);
   }
 
   async logout(): Promise<void> {

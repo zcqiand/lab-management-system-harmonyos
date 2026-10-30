@@ -14,6 +14,10 @@ import { InspectionObject } from '../shared/models/InspectionObject';
 import { InspectionParameter } from '../shared/models/InspectionParameter';
 import { InspectionStandard } from '../shared/models/InspectionStandard';
 import { ParamInterface } from '../shared/models/ParamInterface';
+import { Contract } from '../shared/models/Contract';
+import { SampleReceipt } from '../shared/models/SampleReceipt';
+import { Sample } from '../shared/models/Sample';
+import { TestRecord } from '../shared/models/TestRecord';
 import { session } from '../session/Session';
 
 @Entry
@@ -33,6 +37,10 @@ struct Index {
   @State parameters: InspectionParameter[] = [];
   @State standards: InspectionStandard[] = [];
   @State paramInterfaces: ParamInterface[] = [];
+  @State contracts: Contract[] = [];
+  @State receipts: SampleReceipt[] = [];
+  @State samples: Sample[] = [];
+  @State testRecords: TestRecord[] = [];
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -68,6 +76,14 @@ struct Index {
     this.paramInterfaces = (await session.listParamInterfaces(1, 20)).items;
   }
 
+  // 业务数据只读区（片4）：合同/委托/样品/记录
+  private async loadBusiness(): Promise<void> {
+    this.contracts = (await session.listContracts(1, 20)).items;
+    this.receipts = (await session.listReceipts(1, 20)).items;
+    this.samples = (await session.listSamples(1, 20)).items;
+    this.testRecords = (await session.listTestRecords(1, 20)).items;
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -80,6 +96,7 @@ struct Index {
       await this.loadBrands();
       await this.loadCodeTables();
       await this.loadCapability();
+      await this.loadBusiness();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -113,6 +130,10 @@ struct Index {
       this.parameters = [];
       this.standards = [];
       this.paramInterfaces = [];
+      this.contracts = [];
+      this.receipts = [];
+      this.samples = [];
+      this.testRecords = [];
       this.password = '';
       this.busy = false;
     }
@@ -274,6 +295,52 @@ struct Index {
         }
         .width('88%')
         .height('14%')
+        Text(`业务数据 · 合同（${this.contracts.length}）/ 委托（${this.receipts.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.contracts, (item: Contract) => {
+            ListItem() {
+              Text(`合同 ${item.contractCode} · ${item.projectName}（${item.clientUnit}）`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: Contract) => item.id)
+          ForEach(this.receipts, (item: SampleReceipt) => {
+            ListItem() {
+              Text(`委托 ${item.commissionCode} · ${item.categoryCode}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: SampleReceipt) => item.id)
+        }
+        .width('88%')
+        .height('12%')
+        Text(`业务数据 · 样品（${this.samples.length}）/ 记录（${this.testRecords.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.samples, (item: Sample) => {
+            ListItem() {
+              Text(`样品 ${item.sampleCode}${item.sampleName !== undefined ? ` · ${item.sampleName}` : ''}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: Sample) => item.id)
+          ForEach(this.testRecords, (item: TestRecord) => {
+            ListItem() {
+              Text(`记录 ${item.parameterCode} · 要求 ${item.requirement} → 结果 ${item.result}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: TestRecord) => item.id)
+        }
+        .width('88%')
+        .height('12%')
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

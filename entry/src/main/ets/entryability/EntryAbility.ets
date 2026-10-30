@@ -1,21 +1,18 @@
-// 入口 Ability：只挂 Index 页（首页 + 码表只读片 + 检测能力只读片）。下方 [shared 触碰]
-// 仅保留尚未接页面的 Api 类——ArkTS 编译图 = import 闭包，未 import 的生成文件不进编译；
-// 各片接线后从触碰集移除（AuthApi/CatalogApi 首页片，ReportNamesApi/CalculationMethodsApi/
-// TechnicalRequirementsApi 码表片，InspectionDictionaryApi/ParamInterfacesApi 检测能力片）。
+// 入口 Ability：只挂 Index 页（首页 + 码表 + 检测能力 + 业务数据 四只读片）。下方
+// [shared 触碰] 仅保留尚未接页面的 Api 类——ArkTS 编译图 = import 闭包，未 import 的
+// 生成文件不进编译；各片接线后从触碰集移除（AuthApi/CatalogApi 首页片，码表片三类，
+// InspectionDictionaryApi/ParamInterfacesApi 检测能力片，ContractsApi/ReceiptsApi/
+// SamplesApi/TestRecordsApi 业务数据片）。
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { ContractsApi, FrontendBindMetaApi, ReceiptsApi, SamplesApi, SummaryApi, TestRecordsApi } from '../shared';
+import { FrontendBindMetaApi, SummaryApi } from '../shared';
 import { ApiClient } from 'harmonyos-api-runtime';
 
 // [shared 触碰] 未接线 Api 类实例化触碰：编译覆盖占位（spike 同款），逐片消费后移除。
 const __SHARED_TOUCH__: Array<Object> = [
-  new ContractsApi(new ApiClient('https://touch.invalid')),
   new FrontendBindMetaApi(new ApiClient('https://touch.invalid')),
-  new ReceiptsApi(new ApiClient('https://touch.invalid')),
-  new SamplesApi(new ApiClient('https://touch.invalid')),
   new SummaryApi(new ApiClient('https://touch.invalid')),
-  new TestRecordsApi(new ApiClient('https://touch.invalid')),
 ];
 void __SHARED_TOUCH__;
 
