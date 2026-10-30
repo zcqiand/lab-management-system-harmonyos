@@ -6,6 +6,9 @@ import { util } from '@kit.ArkTS';
 import { ApiError } from 'harmonyos-api-runtime';
 import { CatalogListBrandsResponse } from '../shared/models/CatalogListBrandsResponse';
 import { InspectionBrand } from '../shared/models/InspectionBrand';
+import { InspectionReportName } from '../shared/models/InspectionReportName';
+import { CalculationMethod } from '../shared/models/CalculationMethod';
+import { TechnicalRequirement } from '../shared/models/TechnicalRequirement';
 import { session } from '../session/Session';
 
 @Entry
@@ -17,6 +20,9 @@ struct Index {
   @State busy: boolean = false;
   @State loggedIn: boolean = false;
   @State brands: CatalogListBrandsResponse | null = null;
+  @State reportNames: InspectionReportName[] = [];
+  @State calcMethods: CalculationMethod[] = [];
+  @State techReqs: TechnicalRequirement[] = [];
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -35,6 +41,14 @@ struct Index {
     this.brands = await session.listBrands(1, 20);
   }
 
+  // 码表只读区（片2）：报告名称/计算方法/技术要求三张表（lab 不切片，全量回显）
+  private async loadCodeTables(): Promise<void> {
+    const rn = await session.listReportNames(1, 20);
+    this.reportNames = rn.items;
+    this.calcMethods = await session.listCalculationMethods();
+    this.techReqs = await session.listTechnicalRequirements();
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -45,6 +59,7 @@ struct Index {
       await this.ensureConfigured();
       await session.login(this.username, this.password);
       await this.loadBrands();
+      await this.loadCodeTables();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -70,13 +85,17 @@ struct Index {
     } finally {
       this.loggedIn = false;
       this.brands = null;
+      this.reportNames = [];
+      this.calcMethods = [];
+      this.techReqs = [];
       this.password = '';
       this.busy = false;
     }
   }
 
   build() {
-    Column({ space: 12 }) {
+    Scroll() {
+      Column({ space: 12 }) {
       Text('实验室管理系统')
         .fontSize(26)
         .fontWeight(FontWeight.Bold)
@@ -125,12 +144,57 @@ struct Index {
             }, (item: InspectionBrand) => item.code)
           }
           .width('88%')
-          .height('45%')
+          .height('22%')
         } else {
           Text('（无品牌数据）')
             .fontSize(13)
             .opacity(0.6)
         }
+        Text(`码表 · 报告名称（${this.reportNames.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.reportNames, (item: InspectionReportName) => {
+            ListItem() {
+              Text(`${item.code} · ${item.name}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: InspectionReportName) => item.code)
+        }
+        .width('88%')
+        .height(this.reportNames.length > 3 ? '10%' : undefined)
+        Text(`码表 · 计算方法（${this.calcMethods.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.calcMethods, (item: CalculationMethod) => {
+            ListItem() {
+              Text(`${item.inspectionObjectCode}/${item.inspectionParameterCode} · ${item.algorithmType} · 试件 ${item.specimenCount}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: CalculationMethod) => `${item.inspectionObjectCode}/${item.inspectionParameterCode}`)
+        }
+        .width('88%')
+        .height(this.calcMethods.length > 3 ? '10%' : undefined)
+        Text(`码表 · 技术要求（${this.techReqs.length}）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.techReqs, (item: TechnicalRequirement) => {
+            ListItem() {
+              Text(`${item.inspectionObjectCode}/${item.inspectionParameterCode}/${item.judgmentStandardCode} · ${item.valueType}`)
+                .fontSize(13)
+                .width('100%')
+            }
+            .padding(3)
+          }, (item: TechnicalRequirement) => `${item.inspectionObjectCode}/${item.inspectionParameterCode}/${item.judgmentStandardCode}`)
+        }
+        .width('88%')
+        .height(this.techReqs.length > 3 ? '10%' : undefined)
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)
@@ -144,9 +208,13 @@ struct Index {
           .fontSize(13)
           .opacity(0.75)
       }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ top: 24, bottom: 24 })
     }
     .width('100%')
     .height('100%')
-    .justifyContent(FlexAlign.Center)
+    .align(Alignment.Top)
   }
 }
