@@ -23,6 +23,10 @@ import { SamplesListSamplesResponse } from '../shared/models/SamplesListSamplesR
 import { TestRecordsListTestRecordsResponse } from '../shared/models/TestRecordsListTestRecordsResponse';
 import { DashboardStats } from '../shared/models/DashboardStats';
 import { SummaryData } from '../shared/models/SummaryData';
+import { Contract } from '../shared/models/Contract';
+import { CreateContractRequest } from '../shared/models/CreateContractRequest';
+import { UpdateContractRequest } from '../shared/models/UpdateContractRequest';
+import { assembleCreateContract, assembleUpdateContract, ensureContractId, ContractForm } from '../forms/ContractForms';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -221,6 +225,19 @@ export class Session {
 
   getReportSummary(): Promise<SummaryData> {
     return this.requireSummary().getReportSummary(undefined, undefined, undefined);
+  }
+
+  // 合同写流（M02.F01.I03/I04/I05）：表单装配 fail-fast 后走生成 Api
+  async createContract(form: ContractForm): Promise<Contract> {
+    return this.requireContracts().createContract(assembleCreateContract(form));
+  }
+
+  async updateContract(id: string, form: ContractForm): Promise<Contract> {
+    return this.requireContracts().updateContract(ensureContractId(id), assembleUpdateContract(form));
+  }
+
+  async deleteContract(id: string): Promise<void> {
+    await this.requireContracts().deleteContract(ensureContractId(id));
   }
 
   async logout(): Promise<void> {

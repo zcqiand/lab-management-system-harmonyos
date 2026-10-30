@@ -21,6 +21,7 @@ import { TestRecord } from '../shared/models/TestRecord';
 import { DashboardStats } from '../shared/models/DashboardStats';
 import { SummaryData } from '../shared/models/SummaryData';
 import { SummaryColumn } from '../shared/models/SummaryColumn';
+import { ContractForm } from '../forms/ContractForms';
 import { session } from '../session/Session';
 
 @Entry
@@ -48,6 +49,16 @@ struct Index {
   @State reportSummary: SummaryData | null = null;
   @State statLines: string[] = [];
   @State summaryLines: string[] = [];
+  // 写面（合同 CRUD）：表单态 + 编辑中合同 id（'' = 创建态）
+  @State formCode: string = '';
+  @State formClientUnit: string = '';
+  @State formProjectName: string = '';
+  @State formConstructionUnit: string = '';
+  @State formWitnessUnit: string = '';
+  @State formWitness: string = '';
+  @State formProjectLocation: string = '';
+  @State formStatus: string = '';
+  @State editingContractId: string = '';
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -155,6 +166,110 @@ struct Index {
     }
   }
 
+  // 写面（合同 CRUD）：表单态 → ContractForm → Session（fail-fast 在装配层，错误显 message）
+  private currentForm(): ContractForm {
+    let f: ContractForm = {
+      contractCode: this.formCode,
+      clientUnit: this.formClientUnit,
+      projectName: this.formProjectName,
+      constructionUnit: this.formConstructionUnit,
+      witnessUnit: this.formWitnessUnit,
+      witness: this.formWitness,
+      projectLocation: this.formProjectLocation,
+      status: this.formStatus
+    };
+    return f;
+  }
+
+  private resetForm(): void {
+    this.formCode = '';
+    this.formClientUnit = '';
+    this.formProjectName = '';
+    this.formConstructionUnit = '';
+    this.formWitnessUnit = '';
+    this.formWitness = '';
+    this.formProjectLocation = '';
+    this.formStatus = '';
+    this.editingContractId = '';
+  }
+
+  private async submitCreate(): Promise<void> {
+    if (this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.message = '';
+    try {
+      const created = await session.createContract(this.currentForm());
+      this.message = `已创建合同 ${created.contractCode}`;
+      this.resetForm();
+      await this.loadBusiness();
+      await this.loadSummary();
+    } catch (err) {
+      this.message = `创建失败：${(err as Error).message}`;
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private async submitUpdate(): Promise<void> {
+    if (this.busy || this.editingContractId === '') {
+      return;
+    }
+    this.busy = true;
+    this.message = '';
+    try {
+      const updated = await session.updateContract(this.editingContractId, this.currentForm());
+      this.message = `已更新合同 ${updated.contractCode}`;
+      this.resetForm();
+      await this.loadBusiness();
+    } catch (err) {
+      this.message = `更新失败：${(err as Error).message}`;
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private async submitDelete(id: string): Promise<void> {
+    if (this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.message = '';
+    try {
+      await session.deleteContract(id);
+      this.message = `已删除合同（id=${id}）`;
+      if (this.editingContractId === id) {
+        this.resetForm();
+      }
+      await this.loadBusiness();
+      await this.loadSummary();
+    } catch (err) {
+      this.message = `删除失败：${(err as Error).message}`;
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private startEdit(id: string): void {
+    for (let i = 0; i < this.contracts.length; i++) {
+      if (this.contracts[i].id === id) {
+        const c = this.contracts[i];
+        this.formCode = c.contractCode;
+        this.formClientUnit = c.clientUnit;
+        this.formProjectName = c.projectName;
+        this.formConstructionUnit = c.constructionUnit;
+        this.formWitnessUnit = c.witnessUnit;
+        this.formWitness = c.witness;
+        this.formProjectLocation = c.projectLocation !== undefined ? c.projectLocation : '';
+        this.formStatus = '';
+        this.editingContractId = id;
+        this.message = `编辑中：${c.contractCode}（留空字段不动，状态留空不改）`;
+        return;
+      }
+    }
+  }
+
   private async doLogout(): Promise<void> {
     if (this.busy) {
       return;
@@ -183,6 +298,7 @@ struct Index {
       this.reportSummary = null;
       this.statLines = [];
       this.summaryLines = [];
+      this.resetForm();
       this.password = '';
       this.busy = false;
     }
@@ -350,9 +466,23 @@ struct Index {
         List() {
           ForEach(this.contracts, (item: Contract) => {
             ListItem() {
-              Text(`合同 ${item.contractCode} · ${item.projectName}（${item.clientUnit}）`)
-                .fontSize(13)
-                .width('100%')
+              Row({ space: 8 }) {
+                Text(`合同 ${item.contractCode} · ${item.projectName}（${item.clientUnit}）`)
+                  .fontSize(13)
+                  .layoutWeight(1)
+                Button('改')
+                  .fontSize(11)
+                  .onClick(() => {
+                    this.startEdit(item.id);
+                  })
+                // @entry M02.F01.I05 删除合同
+                Button('删')
+                  .fontSize(11)
+                  .onClick(() => {
+                    this.submitDelete(item.id);
+                  })
+              }
+              .width('100%')
             }
             .padding(3)
           }, (item: Contract) => item.id)
@@ -420,6 +550,73 @@ struct Index {
         }
         .width('88%')
         .height('12%')
+        Text(this.editingContractId === '' ? '写面 · 创建合同（* 必填）' : `写面 · 编辑合同 ${this.editingContractId}（留空字段不动）`)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        TextInput({ placeholder: '* 合同编号', text: this.formCode })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formCode = v;
+          })
+        TextInput({ placeholder: '* 委托单位', text: this.formClientUnit })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formClientUnit = v;
+          })
+        TextInput({ placeholder: '* 工程名称', text: this.formProjectName })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formProjectName = v;
+          })
+        TextInput({ placeholder: '* 施工单位', text: this.formConstructionUnit })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formConstructionUnit = v;
+          })
+        TextInput({ placeholder: '* 见证单位', text: this.formWitnessUnit })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formWitnessUnit = v;
+          })
+        TextInput({ placeholder: '* 见证人', text: this.formWitness })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formWitness = v;
+          })
+        TextInput({ placeholder: '工程所在地点（选填）', text: this.formProjectLocation })
+          .width('88%')
+          .onChange((v: string) => {
+            this.formProjectLocation = v;
+          })
+        if (this.editingContractId !== '') {
+          TextInput({ placeholder: '状态（active/archived，留空不改）', text: this.formStatus })
+            .width('88%')
+            .onChange((v: string) => {
+              this.formStatus = v;
+            })
+        }
+        Row({ space: 12 }) {
+          if (this.editingContractId === '') {
+            // @entry M02.F01.I03 创建合同
+            Button(this.busy ? '创建中…' : '创建合同')
+              .enabled(!this.busy)
+              .onClick(() => {
+                this.submitCreate();
+              })
+          } else {
+            // @entry M02.F01.I04 更新合同（PATCH 语义）
+            Button(this.busy ? '保存中…' : '保存更新')
+              .enabled(!this.busy)
+              .onClick(() => {
+                this.submitUpdate();
+              })
+            Button('取消编辑')
+              .enabled(!this.busy)
+              .onClick(() => {
+                this.resetForm();
+              })
+          }
+        }
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

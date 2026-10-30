@@ -28,21 +28,23 @@
 
 | 模块 ID | 模块名称 | 说明 | 状态 |
 |---|---|---|---|
-| M01 | （待填） | | 规划 |
+| M02 | 资源管理 | 合同管理（HarmonyOS ArkTS 消费面；ID 与 family shared 树同源镜像登记） | 开发中 |
 
 ---
 
-## M01 （待填）
+## M02 资源管理
 
 | 功能 ID | 功能名称 | 说明 | 状态 |
 |---|---|---|---|
-| M01.F01 | （待填） | | 规划 |
+| M02.F01 | 合同管理 | 合同 CRUD（HarmonyOS：写面表单 + Session 装配；只读列表片已先行） | 开发中 |
 
-### M01.F01 （待填）
+### M02.F01 合同管理
 
 | 子项 ID | 名称 | 类型 | 交付 | 说明 | 状态 |
 |---|---|---|---|---|---|
-| M01.F01.I01 | （待填） | 查询 | 后端 | | 规划 |
+| M02.F01.I03 | 创建合同（HarmonyOS 写面） | 按钮 | 前端+后端 | POST /api/contracts：forms/ContractForms 六必填 fail-fast 装配，status 默认 active；Hypium 锚 entry/src/test/Biz.test.ets | 已上线 |
+| M02.F01.I04 | 更新合同（HarmonyOS 写面） | 按钮 | 前端+后端 | PUT /api/contracts/{id} PATCH 语义：留空字段不动；列表行「改」载入表单，保存走 PUT；状态留空不改 | 已上线 |
+| M02.F01.I05 | 删除合同（HarmonyOS 写面） | 按钮 | 前端+后端 | DELETE /api/contracts/{id}：列表行「删」，ensureContractId 空 id fail-fast | 已上线 |
 
 ---
 
