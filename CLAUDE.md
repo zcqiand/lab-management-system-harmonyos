@@ -1,11 +1,11 @@
-# CLAUDE.md — lab 实验室管理系统（HarmonyOS ArkTS 版）
+# CLAUDE.md — lab 建筑工程实验室管理系统（HarmonyOS ArkTS 版）
 
 > 书稿配套仓 + harness 门禁仓双身份。入口，不是手册。L0 门强制上限 60 行。
-> 本仓为《（书稿信息待补）》案例（待补）（lab 实验室管理系统（HarmonyOS ArkTS 版））的可运行配套工程，是书稿代码块的 **source of truth**。
+> 本仓为《（书稿信息待补）》案例（待补）（lab 建筑工程实验室管理系统（HarmonyOS ArkTS 版））的可运行配套工程，是书稿代码块的 **source of truth**。
 
 ## 1. 项目定位
 
-lab 实验室管理系统（HarmonyOS ArkTS 版）（`lab-management-system-harmonyos`，技术栈 `harmonyos`）。一句话定位见 README.md。
+lab 建筑工程实验室管理系统（HarmonyOS ArkTS 版）（`lab-management-system-harmonyos`，技术栈 `harmonyos`）。一句话定位见 README.md。
 
 ## 2. 铁律
 

@@ -1,4 +1,4 @@
-# 功能清单（Function Tree）— lab 实验室管理系统（HarmonyOS ArkTS 版）
+# 功能清单（Function Tree）— lab 建筑工程实验室管理系统（HarmonyOS ArkTS 版）
 
 > **全体系唯一锚点。** 需求、流程、设计、测试都引用这里的 ID。
 > 不在这里的 ID 是悬空引用，L5 门会拦。**改功能，先改这份表。**

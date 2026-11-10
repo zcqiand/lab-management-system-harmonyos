@@ -29,7 +29,7 @@ import { session } from '../session/Session';
 struct Index {
   @State username: string = '';
   @State password: string = '';
-  @State message: string = '实验室管理系统（HarmonyOS ArkTS 版）';
+  @State message: string = '建筑工程实验室管理系统（HarmonyOS ArkTS 版）';
   @State busy: boolean = false;
   @State loggedIn: boolean = false;
   @State brands: CatalogListBrandsResponse | null = null;
@@ -307,7 +307,7 @@ struct Index {
   build() {
     Scroll() {
       Column({ space: 12 }) {
-      Text('实验室管理系统')
+      Text('建筑工程实验室管理系统')
         .fontSize(26)
         .fontWeight(FontWeight.Bold)
       Text('HarmonyOS ArkTS（X14 槽）')

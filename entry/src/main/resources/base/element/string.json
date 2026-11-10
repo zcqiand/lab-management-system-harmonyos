@@ -1,6 +1,6 @@
 {
   "string": [
-    { "name": "app_name", "value": "lab 实验室管理系统（HarmonyOS ArkTS 版）" },
+    { "name": "app_name", "value": "lab 建筑工程实验室管理系统（HarmonyOS ArkTS 版）" },
     { "name": "module_desc", "value": "lab-management-system-harmonyos entry 模块" }
   ]
 }
